@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { verifyToken } from './lib/auth';
 
 export async function middleware(request: NextRequest) {
+  // PUBLIC: /ats - Não requer autenticação
   const token = request.cookies.get('auth-token')?.value;
 
   // Rotas protegidas: apenas /app/* (excluindo /ats que está fora de /app)
