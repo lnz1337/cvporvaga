@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String?
+  passwordHash String
+  credits      Int          @default(1) // 1 crédito grátis ao se cadastrar
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  
+  resumes      Resume[]
+  jobs         Job[]
+  generations  Generation[]
+  purchases    Purchase[]
+}
+
+model Resume {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rawText     String       // Texto bruto do currículo
+  createdAt   DateTime     @default(now())
+  
+  generations Generation[]
+}
+
+model Job {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String?
+  company         String?
+  descriptionText String       // Texto da vaga
+  createdAt       DateTime     @default(now())
+  
+  generations     Generation[]
+}
+
+model Generation {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId        String
+  resume          Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  jobId           String?
+  job             Job?      @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  atsScoreBefore  Int?      // Score antes da otimização
+  atsScoreAfter   Int?      // Score depois da otimização
+  outputJson      String    // JSON do currículo gerado
+  outputPdfPath   String?   // Caminho do PDF gerado
+  createdAt       DateTime  @default(now())
+}
+
+model Purchase {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     String   // "stripe", "mock", etc.
+  status       String   // "pending", "completed", "failed"
+  creditsAdded Int
+  amount       Float    // Valor em reais
+  createdAt    DateTime @default(now())
+}
