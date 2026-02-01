@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 // pdf-parse is a CommonJS module, need to use dynamic import
 const pdfParse = require('pdf-parse');
@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        const { error: uploadError } = await supabaseAdmin.storage
+        const supabase = getSupabaseAdmin();
+        const { error: uploadError } = await supabase.storage
             .from('resumes')
             .upload(filePath, buffer, {
                 contentType: ALLOWED_MIME_TYPE,
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
             console.error('Erro ao extrair texto do PDF:', pdfError);
 
             // Limpar arquivo do storage se extração falhar
-            await supabaseAdmin.storage.from('resumes').remove([filePath]);
+            await supabase.storage.from('resumes').remove([filePath]);
 
             return NextResponse.json(
                 {
