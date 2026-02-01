@@ -48,7 +48,7 @@ export default function Pricing() {
                   <span>Ilimitado</span>
                 </li>
               </ul>
-              <Link href="/app/ats" className="block">
+              <Link href="/ats" className="block">
                 <Button variant="outline" className="w-full">
                   Avaliar meu CV grátis
                 </Button>

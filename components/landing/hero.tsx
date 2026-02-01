@@ -28,8 +28,8 @@ export default function Hero() {
             </h1>
 
             <p className="text-xl text-gray-600 leading-relaxed">
-              Nossa IA adapta seu currículo para cada vaga específica, destacando as habilidades 
-              certas e usando as palavras-chave que os sistemas ATS procuram. Aumente suas chances 
+              Nossa IA adapta seu currículo para cada vaga específica, destacando as habilidades
+              certas e usando as palavras-chave que os sistemas ATS procuram. Aumente suas chances
               de conseguir entrevistas.
             </p>
 
@@ -39,7 +39,7 @@ export default function Hero() {
                   Gerar CV Otimizado
                 </Button>
               </Link>
-              <Link href="/app/ats">
+              <Link href="/ats">
                 <Button size="lg" variant="outline">
                   Testar meu CV atual
                 </Button>
