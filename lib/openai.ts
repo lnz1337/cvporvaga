@@ -1,8 +1,26 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Singleton instance
+let openaiInstance: OpenAI | null = null;
+
+/**
+ * Get OpenAI client (lazy initialization)
+ */
+function getOpenAI(): OpenAI {
+  if (!openaiInstance) {
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      throw new Error(
+        'Variável de ambiente OPENAI_API_KEY não configurada. Configure a chave da OpenAI.'
+      );
+    }
+
+    openaiInstance = new OpenAI({ apiKey });
+  }
+
+  return openaiInstance;
+}
 
 export interface CVData {
   name: string;
@@ -81,6 +99,7 @@ RETORNE APENAS um JSON válido no seguinte formato (sem markdown, sem \`\`\`json
 }`;
 
   try {
+    const openai = getOpenAI();
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -98,12 +117,12 @@ RETORNE APENAS um JSON válido no seguinte formato (sem markdown, sem \`\`\`json
     });
 
     const content = completion.choices[0]?.message?.content || '{}';
-    
+
     // Remover possíveis markdown code blocks
     const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
+
     const parsed = JSON.parse(cleaned);
-    
+
     return parsed as CVData;
   } catch (error) {
     console.error('Erro ao gerar CV otimizado:', error);
