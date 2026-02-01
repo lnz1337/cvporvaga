@@ -95,11 +95,8 @@ export default function ATSScannerPage() {
       // Importar pdfjs-dist dinamicamente
       const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
-      // Configurar worker (usando worker local do pacote)
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-        'pdfjs-dist/legacy/build/pdf.worker.mjs',
-        import.meta.url
-      ).toString();
+      // Configurar worker usando unpkg CDN (mais confiável)
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
 
       // Ler arquivo como ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
