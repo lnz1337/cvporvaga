@@ -51,9 +51,7 @@ export function getSupabaseBrowser(): SupabaseClient {
     return supabaseBrowserInstance;
 }
 
-// Export legacy names for backward compatibility
-export const supabaseAdmin = getSupabaseAdmin();
-export const supabaseBrowser = getSupabaseBrowser();
+
 
 /**
  * Upload de arquivo para o Supabase Storage
