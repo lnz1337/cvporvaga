@@ -5,8 +5,11 @@ import { verifyToken } from './lib/auth';
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
 
-  // Rotas protegidas
-  if (request.nextUrl.pathname.startsWith('/app')) {
+  // Rotas protegidas (exceto /ats que é público)
+  if (
+    request.nextUrl.pathname.startsWith('/app') &&
+    !request.nextUrl.pathname.startsWith('/ats')
+  ) {
     if (!token) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
@@ -33,5 +36,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/app/:path*', '/login', '/signup'],
+  matcher: ['/app/:path*', '/ats/:path*', '/login', '/signup'],
 };

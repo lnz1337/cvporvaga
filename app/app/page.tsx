@@ -49,7 +49,7 @@ export default async function DashboardPage() {
                 <span className="font-semibold text-green-700">100% Grátis</span>
               </li>
             </ul>
-            <Link href="/app/ats">
+            <Link href="/ats">
               <Button className="w-full bg-green-600 hover:bg-green-700 group">
                 Analisar gratuitamente
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
