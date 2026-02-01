@@ -92,29 +92,42 @@ export default function ATSScannerPage() {
     setResumeText(''); // Limpar texto anterior
 
     try {
-      // Criar FormData para enviar o arquivo
-      const formData = new FormData();
-      formData.append('file', file);
+      // Importar pdfjs-dist dinamicamente
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
-      // Enviar para API
-      const response = await fetch('/api/ats/upload-pdf', {
-        method: 'POST',
-        body: formData,
-      });
+      // Configurar worker
+      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-      const data = await response.json();
+      // Ler arquivo como ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao fazer upload');
+      // Carregar documento PDF
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+      // Extrair texto de todas as páginas
+      let fullText = '';
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ');
+
+        fullText += pageText + '\n\n';
       }
 
-      // Sucesso! Preencher textarea com o texto extraído
-      if (data.text) {
-        setResumeText(data.text);
-        alert(`✅ PDF processado com sucesso!\n\nTexto extraído de "${data.fileName}".\n\nVocê pode editar o texto abaixo antes de analisar.`);
+      // Validar se conseguiu extrair texto
+      if (!fullText || fullText.trim().length < 10) {
+        throw new Error('Não foi possível extrair texto do PDF. Pode ser um PDF escaneado (imagem).');
       }
+
+      // Sucesso! Preencher textarea
+      setResumeText(fullText.trim());
+      alert(`✅ PDF processado com sucesso!\n\n${pdf.numPages} página(s) processada(s).\n\nVocê pode editar o texto abaixo antes de analisar.`);
+
     } catch (error: any) {
-      console.error('Erro no upload:', error);
+      console.error('Erro ao processar PDF:', error);
       alert(
         `❌ Erro: ${error.message}\n\nPor favor, tente:\n1. Copiar o texto do PDF manualmente\n2. Colar no campo abaixo`
       );
