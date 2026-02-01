@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, CheckCircle2, XCircle, Sparkles } from 'lucide-react';
+import { AlertCircle, CheckCircle2, XCircle, Sparkles, Upload } from 'lucide-react';
 
 interface ATSResult {
   score: number;
@@ -20,8 +21,11 @@ export default function ATSScannerPage() {
   const [jobText, setJobText] = useState('');
   const [result, setResult] = useState<ATSResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadingPDF, setUploadingPDF] = useState(false);
 
   const handleAnalyze = async () => {
+    console.log('handleAnalyze called'); // Debug log
+
     if (!resumeText.trim()) {
       alert('Por favor, insira o texto do seu currículo');
       return;
@@ -31,6 +35,7 @@ export default function ATSScannerPage() {
     setResult(null);
 
     try {
+      console.log('Sending request to API...'); // Debug log
       const res = await fetch('/api/ats/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,11 +45,15 @@ export default function ATSScannerPage() {
         }),
       });
 
+      console.log('Response received:', res.status); // Debug log
+
       if (!res.ok) throw new Error('Erro na análise');
 
       const data = await res.json();
+      console.log('Data received:', data); // Debug log
       setResult(data);
     } catch (error) {
+      console.error('Error during analysis:', error); // Debug log
       alert('Erro ao analisar currículo. Tente novamente.');
     } finally {
       setLoading(false);
@@ -63,6 +72,59 @@ export default function ATSScannerPage() {
     return 'from-red-500 to-red-600';
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo
+    if (file.type !== 'application/pdf') {
+      alert('Apenas arquivos PDF são permitidos');
+      return;
+    }
+
+    // Validar tamanho (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Arquivo muito grande. Tamanho máximo: 5MB');
+      return;
+    }
+
+    setUploadingPDF(true);
+    setResumeText(''); // Limpar texto anterior
+
+    try {
+      // Criar FormData para enviar o arquivo
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Enviar para API
+      const response = await fetch('/api/ats/upload-pdf', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao fazer upload');
+      }
+
+      // Sucesso! Preencher textarea com o texto extraído
+      if (data.text) {
+        setResumeText(data.text);
+        alert(`✅ PDF processado com sucesso!\n\nTexto extraído de "${data.fileName}".\n\nVocê pode editar o texto abaixo antes de analisar.`);
+      }
+    } catch (error: any) {
+      console.error('Erro no upload:', error);
+      alert(
+        `❌ Erro: ${error.message}\n\nPor favor, tente:\n1. Copiar o texto do PDF manualmente\n2. Colar no campo abaixo`
+      );
+    } finally {
+      setUploadingPDF(false);
+      // Limpar input para permitir reusar o mesmo arquivo
+      e.target.value = '';
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
       <div className="mb-8">
@@ -79,16 +141,48 @@ export default function ATSScannerPage() {
             <CardHeader>
               <CardTitle>Seu Currículo</CardTitle>
               <CardDescription>
-                Cole ou digite o texto do seu currículo atual
+                Faça upload de um PDF ou cole o texto do seu currículo
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {/* Botão de Upload */}
+              <div className="flex items-center gap-3">
+                <Label
+                  htmlFor="pdf-upload"
+                  className="cursor-pointer flex-1"
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    disabled={uploadingPDF}
+                    asChild
+                  >
+                    <span>
+                      <Upload className="w-4 h-4 mr-2" />
+                      {uploadingPDF ? 'Processando PDF...' : 'Fazer Upload de PDF'}
+                    </span>
+                  </Button>
+                </Label>
+                <Input
+                  id="pdf-upload"
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={uploadingPDF}
+                />
+                <div className="text-sm text-gray-500">ou</div>
+              </div>
+
+              {/* Textarea */}
               <Textarea
                 placeholder="Cole aqui todo o conteúdo do seu currículo..."
                 value={resumeText}
                 onChange={(e) => setResumeText(e.target.value)}
                 rows={12}
                 className="font-mono text-sm"
+                disabled={uploadingPDF}
               />
             </CardContent>
           </Card>
